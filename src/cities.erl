@@ -16,6 +16,10 @@ new() ->
 declare(Cities, City, LinkedTo) ->
   [{City, LinkedTo} | Cities].
 
-linked_to(Cities, City) ->
-  [].
+linked_to([], City) ->
+  [];
+linked_to([{City, Links} | Tail], City) ->
+  Links;
+linked_to([Head | Tail], City) ->
+  linked_to(Tail, City).
 

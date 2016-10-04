@@ -208,3 +208,34 @@ ERROR: One or more eunit tests failed.
 ERROR: eunit failed while processing /Users/Arnauld/Projects/erlang101/jam201609: rebar_abort
 ```
 
+### Fix `linked_to`: Tail Recursion
+
+
+
+`src/cities.erl`
+
+```erlang
+
+linked_to([], City) ->
+  [];
+linked_to([{City, Links} | Tail], City) ->
+  Links;
+linked_to([Head | Tail], City) ->
+  linked_to(Tail, City).
+```
+
+
+```bash
+→ rebar clean eunit
+==> jam201609 (clean)
+==> jam201609 (eunit)
+Compiled src/myapp_app.erl
+Compiled src/myapp_sup.erl
+src/cities.erl:19: Warning: variable 'City' is unused
+src/cities.erl:21: Warning: variable 'Tail' is unused
+src/cities.erl:23: Warning: variable 'Head' is unused
+Compiled src/cities.erl
+Compiled test/cities_tests.erl
+  2 tests passed.
+Cover analysis: /Users/Arnauld/Projects/erlang101/jam201609/.eunit/index.html
+```
