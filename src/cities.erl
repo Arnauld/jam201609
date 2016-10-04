@@ -19,10 +19,15 @@ declare(Cities, City, [Link|Others]) ->
   NewCities = [{City, Link} | Cities],
   declare(NewCities, City, Others).
 
-linked_to([], _) ->
-  [];
-linked_to([{City, Links} | _], City) ->
-  Links;
-linked_to([_ | Tail], City) ->
-  linked_to(Tail, City).
+linked_to(Cities, City) ->
+  collect_links_of(Cities, City, []).
+
+collect_links_of([], _City, Collected) ->
+  Collected;
+collect_links_of([{City, Other} | Others], City, Collected) ->
+  collect_links_of(Others, City, [Other | Collected]);
+collect_links_of([{Other, City} | Others], City, Collected) ->
+  collect_links_of(Others, City, [Other | Collected]);
+collect_links_of([_ | Others], City, Collected) ->
+  collect_links_of(Others, City, Collected).
 

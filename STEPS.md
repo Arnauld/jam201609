@@ -317,3 +317,29 @@ declare(Cities, City, [Link|Others]) ->
   NewCities = [{City, Link} | Cities],
   declare(NewCities, City, Others).
 ```
+
+Fix `linked_to`:
+
+```erlang
+
+linked_to(Cities, City) ->
+  collect_links_of(Cities, City, []).
+
+collect_links_of([], _City, Collected) ->
+  Collected;
+collect_links_of([{City, Other} | Others], City, Collected) ->
+  collect_links_of(Others, City, [Other | Collected]);
+collect_links_of([{Other, City} | Others], City, Collected) ->
+  collect_links_of(Others, City, [Other | Collected]);
+collect_links_of([_ | Others], City, Collected) ->
+  collect_links_of(Others, City, Collected).
+
+```
+
+```bash
+→ rebar eunit
+==> jam201609 (eunit)
+Compiled src/cities.erl
+  All 3 tests passed.
+Cover analysis: /Users/Arnauld/Projects/erlang101/jam201609/.eunit/index.html
+```
