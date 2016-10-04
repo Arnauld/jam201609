@@ -26,7 +26,7 @@ You should have a look to **rebar3** or **erlang.mk** instead.
 ```bash
 $ mkdir jam201609
 $ cd jam201609
-$ # rebar create-app appid=pandemerl
+$ rebar create-app appid=myapp
 $ touch rebar.config
 $ mkdir src/
 $ mkdir test/
@@ -45,7 +45,11 @@ Compile and execute tests:
 → rebar clean compile eunit
 ==> jam201609 (clean)
 ==> jam201609 (compile)
+Compiled src/myapp_app.erl
+Compiled src/myapp_sup.erl
 ==> jam201609 (eunit)
+Compiled src/myapp_app.erl
+Compiled src/myapp_sup.erl
 ```
 
 Setup Git:
@@ -67,6 +71,7 @@ Open Project in Intellij and setup sdk.
 
 ```bash
 $ echo ".idea/" >> .gitignore
+$ echo "*.iml" >> .gitignore
 $ git status
 $ git commit -a -m "ignore intellij"
 ```
