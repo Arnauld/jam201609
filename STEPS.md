@@ -62,7 +62,7 @@ $ echo "ebin/"   >> .gitignore
 $ git add .
 $ git commit -m "initial project setup"
 [master (root-commit) 1243612] initial project setup
- 5 files changed, 62 insertions(+)
+ ...
  create mode 100644 .gitignore
  create mode 100644 rebar.config
 ```
