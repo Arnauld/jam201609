@@ -64,6 +64,7 @@ $ git commit -m "initial project setup"
 [master (root-commit) 1243612] initial project setup
  ...
  create mode 100644 .gitignore
+ create mode 100644 STEPS.md
  create mode 100644 rebar.config
 ```
 
@@ -75,3 +76,17 @@ $ echo "*.iml" >> .gitignore
 $ git status
 $ git commit -a -m "ignore intellij"
 ```
+
+# Step 1 - List and Pattern Matching
+
+`test/cities_tests.erl`
+
+```erlang
+-module(cities_tests).
+-include_lib("eunit/include/eunit.hrl").
+
+simple_test() ->
+  ?assert(true).
+```
+
+
