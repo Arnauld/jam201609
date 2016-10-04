@@ -250,3 +250,59 @@ linked_to([{City, Links} | _], City) ->
 linked_to([_ | Tail], City) ->
   linked_to(Tail, City).
 ```
+
+### Rework Cities model
+
+`test/cities_tests.erl`
+
+```erlang
+should_declare_city_and_complete_existing_links__test() ->
+  Cities0 = cities:new(),
+  Cities1 = cities:declare(Cities0, paris, [london, madrid]),
+  Cities2 = cities:declare(Cities1, algiers, [paris, madrid]),
+
+  ?assertEqual(lists:sort([london, madrid, algiers]),
+               lists:sort(cities:linked_to(Cities2, paris))).
+```
+
+
+```bash
+→ rebar clean eunit
+==> jam201609 (clean)
+==> jam201609 (eunit)
+Compiled src/myapp_app.erl
+Compiled src/myapp_sup.erl
+Compiled src/cities.erl
+Compiled test/cities_tests.erl
+cities_tests: should_declare_city_and_complete_existing_links__test...*failed*
+in function cities_tests:'-should_declare_city_and_complete_existing_links__test/0-fun-0-'/2 (test/cities_tests.erl, line 22)
+**error:{assertEqual,[{module,cities_tests},
+              {line,22},
+              {expression,"lists : sort ( cities : linked_to ( Cities2 , paris ) )"},
+              {expected,[algiers,london,madrid]},
+              {value,[london,madrid]}]}
+  output:<<"">>
+
+=======================================================
+  Failed: 1.  Skipped: 0.  Passed: 2.
+Cover analysis: /Users/Arnauld/Projects/erlang101/jam201609/.eunit/index.html
+ERROR: One or more eunit tests failed.
+ERROR: eunit failed while processing /Users/Arnauld/Projects/erlang101/jam201609: rebar_abort
+```
+
+Tips, goes from:
+
+```
+[ {paris,   [london, madrid]},
+  {algiers, [paris, madrid] } ]
+```
+
+to:
+
+```
+[ {paris,   london},
+  {paris,   madrid},
+  {algiers, paris },
+  {algiers, madrid} ]
+```
+
