@@ -306,3 +306,14 @@ to:
   {algiers, madrid} ]
 ```
 
+...
+
+Declaration first:
+
+```erlang
+declare(Cities, _, []) ->
+  Cities;
+declare(Cities, City, [Link|Others]) ->
+  NewCities = [{City, Link} | Cities],
+  declare(NewCities, City, Others).
+```
