@@ -239,3 +239,14 @@ Compiled test/cities_tests.erl
   2 tests passed.
 Cover analysis: /Users/Arnauld/Projects/erlang101/jam201609/.eunit/index.html
 ```
+
+Replace unused variable with `_`
+
+```erlang
+linked_to([], _) ->
+  [];
+linked_to([{City, Links} | _], City) ->
+  Links;
+linked_to([_ | Tail], City) ->
+  linked_to(Tail, City).
+```
