@@ -440,3 +440,26 @@ to
   is_link_present(...) ->
     ...
 ```
+
+`src/cities.erl`
+
+```erlang
+declare(Cities, _, []) ->
+  Cities;
+declare(Cities, City, [Link|Others]) ->
+  NewCities = case is_link_present(Cities, City, Link) of
+                true ->
+                  Cities;
+                _ ->
+                  [{City, Link} | Cities]
+              end,
+  declare(NewCities, City, Others).
+
+linked_to(Cities, City) ->
+  collect_links_of(Cities, City, []).
+
+is_link_present([], _City1, _City2) -> false;
+is_link_present([{City1, City2}|_Others], City1, City2) -> true;
+is_link_present([{City2, City1}|_Others], City1, City2) -> true;
+is_link_present([_Head|Others], City1, City2) -> is_link_present(Others, City1, City2).
+```
