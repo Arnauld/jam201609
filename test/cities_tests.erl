@@ -36,21 +36,29 @@ should_return_unique_links_even_on_multiple_declarations__test() ->
 
 should_start_cities_which_then_maintain_its_own_state__test() ->
   {ok, Pid} = cities:start(),
-  Pid ! {declare, paris, [milan, essen]},
-  Pid ! {declare, london, [paris, essen, new_york]},
-  Pid ! {linked_to, paris, self()},
-  receive
-    {linked_to, paris, Links} ->
-      ?assertEqual(
-        lists:sort([milan, essen, london]),
-        lists:sort(Links))
+  try
+    Pid ! {declare, paris, [milan, essen]},
+    Pid ! {declare, london, [paris, essen, new_york]},
+    Pid ! {linked_to, paris, self()},
+    receive
+      {linked_to, paris, Links} ->
+        ?assertEqual(
+          lists:sort([milan, essen, london]),
+          lists:sort(Links))
+    end
+  after
+    Pid ! stop
   end.
 
 should_start_cities_and_interact_with_its_api__test() ->
-  {ok, Pid} = cities:start(),
-  cities:declare(paris, [milan, essen]),
-  cities:declare(london, [paris, essen, new_york]),
-  Links = cities:linked_to(paris),
-  ?assertEqual(
-    lists:sort([milan, essen, london]),
-    lists:sort(Links)).
+  {ok, _Pid} = cities:start(),
+  try
+    cities:declare(paris, [milan, essen]),
+    cities:declare(london, [paris, essen, new_york]),
+    Links = cities:linked_to(paris),
+    ?assertEqual(
+      lists:sort([milan, essen, london]),
+      lists:sort(Links))
+  after
+    cities:stop()
+  end.

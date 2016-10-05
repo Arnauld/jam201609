@@ -26,7 +26,10 @@ loop(Cities) ->
     {linked_to, City, From} ->
       Links = cities:linked_to(Cities, City),
       From ! {linked_to, City, Links},
-      loop(Cities)
+      loop(Cities);
+
+    stop ->
+      ok
   end.
 
 new() ->

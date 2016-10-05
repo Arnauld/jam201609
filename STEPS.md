@@ -620,3 +620,98 @@ ERROR: eunit failed while processing /Users/Arnauld/Projects/erlang101/jam201609
 ```
 
 What happened?
+
+```bash
+→ erl
+Erlang/OTP 18 [erts-7.2.1] [source] [64-bit] [smp:4:4] [async-threads:10] [hipe] [kernel-poll:false]
+
+Eshell V7.2.1  (abort with ^G)
+1> c('src/cities.erl').
+{ok,cities}
+2> cities:start().
+{ok,<0.40.0>}
+3> cities:start().
+** exception error: bad argument
+     in function  register/2
+        called as register(cities,<0.42.0>)
+     in call from cities:start/0 (src/cities.erl, line 17)
+```
+
+
+Process started in previous test is still running thus register fails...
+
+One needs to stop the process:
+
+`src/cities.erl`
+```erlang
+loop(Cities) ->
+  receive
+    {declare, City, Links} ->
+      NewCities = cities:declare(Cities, City, Links),
+      loop(NewCities);
+
+    {linked_to, City, From} ->
+      Links = cities:linked_to(Cities, City),
+      From ! {linked_to, City, Links},
+      loop(Cities);
+      
+    stop ->
+      ok
+  end.
+```
+
+And put a **finally** block in tests:
+
+```erlang
+should_start_cities_which_then_maintain_its_own_state__test() ->
+  {ok, Pid} = cities:start(),
+  try
+    Pid ! {declare, paris, [milan, essen]},
+    Pid ! {declare, london, [paris, essen, new_york]},
+    Pid ! {linked_to, paris, self()},
+    receive
+      {linked_to, paris, Links} ->
+        ?assertEqual(
+          lists:sort([milan, essen, london]),
+          lists:sort(Links))
+    end
+  after
+    Pid ! stop
+  end.
+
+should_start_cities_and_interact_with_its_api__test() ->
+  {ok, _Pid} = cities:start(),
+  try
+    cities:declare(paris, [milan, essen]),
+    cities:declare(london, [paris, essen, new_york]),
+    Links = cities:linked_to(paris),
+    ?assertEqual(
+      lists:sort([milan, essen, london]),
+      lists:sort(Links))
+  after
+    cities:stop()
+  end.
+```
+
+```bash
+→ rebar eunit
+==> jam201609 (eunit)
+Compiled test/cities_tests.erl
+cities_tests: should_start_cities_and_interact_with_its_api__test...*failed*
+in function cities:stop/0
+  called as stop()
+in call from cities_tests:should_start_cities_and_interact_with_its_api__test/0 (test/cities_tests.erl, line 55)
+in call from cities_tests:should_start_cities_and_interact_with_its_api__test/0
+**error:undef
+  output:<<"">>
+
+=======================================================
+  Failed: 1.  Skipped: 0.  Passed: 5.
+Cover analysis: /Users/Arnauld/Projects/erlang101/jam201609/.eunit/index.html
+ERROR: One or more eunit tests failed.
+ERROR: eunit failed while processing /Users/Arnauld/Projects/erlang101/jam201609: rebar_abort
+
+```
+
+Implements the missing functions...
+
