@@ -7,9 +7,21 @@
 
 -export([new/0, declare/3, linked_to/2]).
 
+-export([start/0, loop/1]).
+
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
+start() ->
+  Pid = spawn(?MODULE, loop, [cities:new()]),
+  Pid.
+
+loop(Cities) ->
+  receive
+    Msg ->
+      loop(Cities)
+  end.
+
 new() ->
   [].
 

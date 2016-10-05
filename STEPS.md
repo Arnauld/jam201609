@@ -463,3 +463,76 @@ is_link_present([{City1, City2}|_Others], City1, City2) -> true;
 is_link_present([{City2, City1}|_Others], City1, City2) -> true;
 is_link_present([_Head|Others], City1, City2) -> is_link_present(Others, City1, City2).
 ```
+
+
+# Step 2 - Process
+
+How to maintain state across multiple invocation without providing previous state.
+
+`test/cities_test.erl`
+
+```erlang
+should_start_cities_which_then_maintain_its_own_state__test() ->
+  Pid = cities:start(),
+  Pid ! {declare, paris, [milan, essen]},
+  Pid ! {declare, london, [paris, essen, new_york]},
+  Pid ! {linked_to, paris, self()},
+  receive
+    {linked_to, paris, Links} ->
+      ?assertEqual(list:sort([milan, essen, london]),
+                   list:sort(Links))
+  end.
+```
+
+[Protocol vs API](doc/protocol_vs_api.md)
+
+```
+[self]                              [cities]    [mailbox]
+   |    start                          |
+   ||--------------------------------->||
+   ||   pid                            ||
+   || <--------------------------------||
+   |                                   |
+   |  M1: {declare, City, Links}       |
+   |------------------------------------------> [M1]
+   |                                   |
+   |  M2: {declare, City, Links}       |
+   |------------------------------------------> [M1,M2]
+   |                                   |
+   |  M3: {linked_to, City, From}      |
+   |------------------------------------------> [M1,M2,M3]
+   |                                   |
+   ||                                  |
+   ||<---------------------------------|
+   ||                                  |
+```
+
+* Each **Process** (Pid) has its own Mailbox to store all received message
+* **Mailbox** is a FIFO queue
+* A Process is managed by a scheduler, that orchestrates parts of its execution based on 'tick': 
+  a process can execute up to a certain amount of tick before, 
+  scheduler trigger an other process execution. This allow all processes to be executed, 
+  without any preemption from a given process which take all processing power...
+* `receive` instruction traverses the entire **mailbox to pattern match** a message; 
+  its a blocking instruction that pause the process until a message match the patterns or
+  a timeout occurs.
+* `self()` gives the **current Pid**.
+  
+  
+```batch
+→ rebar eunit
+==> jam201609 (eunit)
+src/cities.erl:21: Warning: variable 'Msg' is unused
+Compiled src/cities.erl
+cities_tests: should_start_cities_which_then_maintain_its_own_state__test...*timed out*
+undefined
+=======================================================
+  Failed: 0.  Skipped: 0.  Passed: 4.
+One or more tests were cancelled.
+Cover analysis: /Users/Arnauld/Projects/erlang101/jam201609/.eunit/index.html
+ERROR: One or more eunit tests failed.
+ERROR: eunit failed while processing /Users/Arnauld/Projects/erlang101/jam201609: rebar_abort
+```
+
+What happened?
+

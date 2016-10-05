@@ -28,3 +28,15 @@ should_return_unique_links_even_on_multiple_declarations__test() ->
 
   ?assertEqual(lists:sort([london, essen]),
                lists:sort(cities:linked_to(Cities2, paris))).
+
+
+should_start_cities_which_then_maintain_its_own_state__test() ->
+  Pid = cities:start(),
+  Pid ! {declare, paris, [milan, essen]},
+  Pid ! {declare, london, [paris, essen, new_york]},
+  Pid ! {linked_to, paris, self()},
+  receive
+    {linked_to, paris, Links} ->
+      ?assertEqual(list:sort([milan, essen, london]),
+                   list:sort(Links))
+  end.
