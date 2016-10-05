@@ -536,3 +536,26 @@ ERROR: eunit failed while processing /Users/Arnauld/Projects/erlang101/jam201609
 
 What happened?
 
+...
+
+`src/cities.erl`
+
+```erlang
+loop(Cities) ->
+  receive
+    {declare, City, Links} ->
+      NewCities = cities:declare(Cities, City, Links),
+      loop(NewCities);
+
+    {linked_to, City, From} ->
+      Links = cities:linked_to(Cities, City),
+      From ! {linked_to, City, Links},
+      loop(Cities)
+  end.
+```
+
+Problem: protocol coherence
+
+* request `{linked_to, City, From}`
+* response `{linked_to, City, Links}`
+

@@ -37,6 +37,6 @@ should_start_cities_which_then_maintain_its_own_state__test() ->
   Pid ! {linked_to, paris, self()},
   receive
     {linked_to, paris, Links} ->
-      ?assertEqual(list:sort([milan, essen, london]),
-                   list:sort(Links))
+      ?assertEqual(lists:sort([milan, essen, london]),
+                   lists:sort(Links))
   end.

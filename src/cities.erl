@@ -18,7 +18,13 @@ start() ->
 
 loop(Cities) ->
   receive
-    Msg ->
+    {declare, City, Links} ->
+      NewCities = cities:declare(Cities, City, Links),
+      loop(NewCities);
+
+    {linked_to, City, From} ->
+      Links = cities:linked_to(Cities, City),
+      From ! {linked_to, City, Links},
       loop(Cities)
   end.
 
@@ -27,7 +33,7 @@ new() ->
 
 declare(Cities, _, []) ->
   Cities;
-declare(Cities, City, [Link|Others]) ->
+declare(Cities, City, [Link | Others]) ->
   NewCities = case is_link_present(Cities, City, Link) of
                 true ->
                   Cities;
@@ -40,9 +46,9 @@ linked_to(Cities, City) ->
   collect_links_of(Cities, City, []).
 
 is_link_present([], _City1, _City2) -> false;
-is_link_present([{City1, City2}|_Others], City1, City2) -> true;
-is_link_present([{City2, City1}|_Others], City1, City2) -> true;
-is_link_present([_Head|Others], City1, City2) -> is_link_present(Others, City1, City2).
+is_link_present([{City1, City2} | _Others], City1, City2) -> true;
+is_link_present([{City2, City1} | _Others], City1, City2) -> true;
+is_link_present([_Head | Others], City1, City2) -> is_link_present(Others, City1, City2).
 
 collect_links_of([], _City, Collected) ->
   Collected;
