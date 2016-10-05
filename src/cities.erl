@@ -14,7 +14,8 @@
 %% ------------------------------------------------------------------
 start() ->
   Pid = spawn(?MODULE, loop, [cities:new()]),
-  Pid.
+  register(?MODULE, Pid),
+  {ok, Pid}.
 
 loop(Cities) ->
   receive

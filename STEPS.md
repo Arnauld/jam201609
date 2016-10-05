@@ -559,3 +559,64 @@ Problem: protocol coherence
 * request `{linked_to, City, From}`
 * response `{linked_to, City, Links}`
 
+## Mask Protocol behind API
+
+```erlang
+Pid = cities:start()
+```
+
+**How to know if process is started, Pid is a non typed variable?**
+
+use pattern matching!
+
+```erlang
+{ok, Pid} = cities:start()
+```
+
+**Also, I still need the Pid to interact with the cities process!!**
+
+use register name!
+
+`src/cities.erl`
+
+```erlang
+start() ->
+  Pid = spawn(?MODULE, loop, [cities:new()]),
+  register(?MODULE, Pid),
+  {ok, Pid}.
+```
+
+`test/cities_test.erl`
+
+```erlang
+should_start_cities_and_interact_with_its_api__test() ->
+  {ok, Pid} = cities:start(),
+  cities:declare(paris, [milan, essen]),
+  cities:declare(london, [paris, essen, new_york]),
+  Links = cities:linked_to(paris),
+  ?assertEqual(
+    lists:sort([milan, essen, london]),
+    lists:sort(Links)).
+```
+
+```bash
+→ rebar eunit
+==> jam201609 (eunit)
+test/cities_tests.erl:50: Warning: variable 'Pid' is unused
+Compiled test/cities_tests.erl
+cities_tests: should_start_cities_and_interact_with_its_api__test...*failed*
+in function erlang:register/2
+  called as register(cities,<0.77.0>)
+in call from cities:start/0 (src/cities.erl, line 17)
+in call from cities_tests:should_start_cities_and_interact_with_its_api__test/0 (test/cities_tests.erl, line 50)
+**error:badarg
+  output:<<"">>
+
+=======================================================
+  Failed: 1.  Skipped: 0.  Passed: 5.
+Cover analysis: /Users/Arnauld/Projects/erlang101/jam201609/.eunit/index.html
+ERROR: One or more eunit tests failed.
+ERROR: eunit failed while processing /Users/Arnauld/Projects/erlang101/jam201609: rebar_abort
+```
+
+What happened?
