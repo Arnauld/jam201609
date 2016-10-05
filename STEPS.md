@@ -715,3 +715,17 @@ ERROR: eunit failed while processing /Users/Arnauld/Projects/erlang101/jam201609
 
 Implements the missing functions...
 
+```erlang
+stop() ->
+  ?MODULE ! stop.
+
+declare(City, Links) ->
+  ?MODULE ! {declare, City, Links}.
+
+linked_to(City) ->
+  ?MODULE ! {linked_to, City, self()},
+  receive
+    {linked_to, City, Links} ->
+      Links
+  end.
+```
