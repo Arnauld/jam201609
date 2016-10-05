@@ -290,6 +290,8 @@ ERROR: One or more eunit tests failed.
 ERROR: eunit failed while processing /Users/Arnauld/Projects/erlang101/jam201609: rebar_abort
 ```
 
+**Exercise: fix this!**
+
 Tips, goes from:
 
 ```
@@ -342,4 +344,99 @@ collect_links_of([_ | Others], City, Collected) ->
 Compiled src/cities.erl
   All 3 tests passed.
 Cover analysis: /Users/Arnauld/Projects/erlang101/jam201609/.eunit/index.html
+```
+
+### Ooops: same duplicate
+
+Let's play with the terminal:
+
+```bash
+→ erl
+Erlang/OTP 18 [erts-7.2.1] [source] [64-bit] [smp:4:4] [async-threads:10] [hipe] [kernel-poll:false]
+
+Eshell V7.2.1  (abort with ^G)
+1> c('src/cities.erl').
+{ok,cities}
+2> Cities0 = cities:
+declare/3      linked_to/2    module_info/0  module_info/1  new/0
+
+2> Cities0 = cities:new().
+[]
+3> Cities1 = cities:declare(Cities0, paris, [london, essen]).
+[{paris,essen},{paris,london}]
+4> Cities2 = cities:declare(Cities1, london, [paris, essen, new_york]).
+[{london,new_york},
+ {london,essen},
+ {london,paris},
+ {paris,essen},
+ {paris,london}]
+5> cities:linked_to(Cities2, paris).
+[london,essen,london]
+6> q().
+ok
+7> %
+```
+
+```bash
+echo "*.beam" >> .gitignore
+```
+
+Grab this behavior in a corresponding test:
+
+`test/cities_test.erl`
+
+```erlang
+should_return_unique_links_even_on_multiple_declarations__test() ->
+  Cities0 = cities:new(),
+  Cities1 = cities:declare(Cities0, paris, [london, essen]),
+  Cities2 = cities:declare(Cities1, london, [paris, essen, new_york]),
+
+  ?assertEqual(lists:sort([london, essen]),
+               lists:sort(cities:linked_to(Cities2, paris))).
+```
+
+```bash
+→ rebar eunit
+==> jam201609 (eunit)
+Compiled src/cities.erl
+Compiled test/cities_tests.erl
+cities_tests: should_return_unique_links_even_on_multiple_declarations__test...*failed*
+in function cities_tests:'-should_return_unique_links_even_on_multiple_declarations__test/0-fun-0-'/2 (test/cities_tests.erl, line 30)
+**error:{assertEqual,[{module,cities_tests},
+              {line,30},
+              {expression,"lists : sort ( cities : linked_to ( Cities2 , paris ) )"},
+              {expected,[essen,london]},
+              {value,[essen,london,london]}]}
+  output:<<"">>
+
+=======================================================
+  Failed: 1.  Skipped: 0.  Passed: 3.
+```
+
+**Exercise: fix this!**
+
+Tips, goes from:
+
+```erlang
+  ...
+  NewCities = [{City, Link} | Cities],
+  ...
+```
+
+to
+
+```erlang
+  ...
+  NewCities = case is_link_present(Cities, City, Link) of
+                true  -> 
+                    Cities;
+                _ -> 
+                    [{City, Link} | Cities]
+              end,
+                
+  
+  is_link_present([], _City1, _City2) ->
+    false;
+  is_link_present(...) ->
+    ...
 ```

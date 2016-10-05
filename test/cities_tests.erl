@@ -20,3 +20,11 @@ should_declare_city_and_complete_existing_links__test() ->
 
   ?assertEqual(lists:sort([london, madrid, algiers]),
                lists:sort(cities:linked_to(Cities2, paris))).
+
+should_return_unique_links_even_on_multiple_declarations__test() ->
+  Cities0 = cities:new(),
+  Cities1 = cities:declare(Cities0, paris, [london, essen]),
+  Cities2 = cities:declare(Cities1, london, [paris, essen, new_york]),
+
+  ?assertEqual(lists:sort([london, essen]),
+               lists:sort(cities:linked_to(Cities2, paris))).
