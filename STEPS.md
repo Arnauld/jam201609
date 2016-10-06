@@ -830,4 +830,66 @@ Ooops procee crashed and is not any more available for Terminal 2...
 (T1@Mentem)7> cities:linked_to(paris).
 ** exception error: bad argument
      in function  cities:linked_to/1 (src/cities.erl, line 28)
+(T1@Mentem)8> self().
+<0.58.0>
 ```
+
+* `self()` has changed!
+
+# Still more process: link and monitor
+
+## Homemade supervisor
+
+`src/cities_sup.erl`
+
+```erlang
+-module(cities_sup).
+
+%% ------------------------------------------------------------------
+%% API Function Exports
+%% ------------------------------------------------------------------
+
+-export([start/0]).
+
+%% ------------------------------------------------------------------
+%% API Function Definitions
+%% ------------------------------------------------------------------
+start() ->
+  spawn(?MODULE, init, []).
+
+init([]) ->
+  process_flag(trap_exit, true),
+  {ok, Pid} = start_cities(),
+  loop(Pid).
+
+start_cities() ->
+  cities:start().
+
+loop(CitiesPid) ->
+    receive
+      {'EXIT', Pid, normal} ->
+        ok;
+      
+      {'EXIT', Pid, Reason} ->
+        error_logger:info_msg("Ooops, cities stopped ~p ~n", [Reason]),
+        {ok, Pid} = start_cities(),
+        loop(Pid)
+    end.
+```
+
+`src/cities.erl` : slightly modified to add a log on start.
+
+
+```erlang
+start() ->
+  Pid = spawn(?MODULE, init, []),
+  register(?MODULE, Pid),
+  {ok, Pid}.
+
+init([]) ->
+  Cities = cities:new(),
+  error_logger:info_msg("Cities started ~n", []),
+  loop(Cities).
+
+```
+

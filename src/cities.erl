@@ -7,16 +7,27 @@
 
 -export([new/0, declare/3, linked_to/2]).
 
--export([start/0, loop/1, stop/0]).
+-export([start/0, start_link/0,  init/1, stop/0]).
 -export([declare/2, linked_to/1]).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
 start() ->
-  Pid = spawn(?MODULE, loop, [cities:new()]),
+  Pid = spawn(?MODULE, init, [[]]),
   register(?MODULE, Pid),
   {ok, Pid}.
+
+start_link() ->
+  Pid = spawn_link(?MODULE, init, [[]]),
+  register(?MODULE, Pid),
+  {ok, Pid}.
+
+init([]) ->
+  Cities = cities:new(),
+  error_logger:info_msg("Cities started ~n", []),
+  loop(Cities).
+
 
 stop() ->
   ?MODULE ! stop.
