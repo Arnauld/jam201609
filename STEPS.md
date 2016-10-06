@@ -729,3 +729,105 @@ linked_to(City) ->
       Links
   end.
 ```
+
+## Let's play with distributed behavior
+
+`Terminal 1`
+
+```bash
+→ erl -sname T1
+Erlang/OTP 18 [erts-7.2.1] [source] [64-bit] [smp:4:4] [async-threads:10] [hipe] [kernel-poll:false]
+
+Eshell V7.2.1  (abort with ^G)
+(T1@Mentem)1> nodes().
+[]
+(T1@Mentem)2>
+```
+
+`Terminal 2`
+
+```bash
+→ erl -sname T2
+Erlang/OTP 18 [erts-7.2.1] [source] [64-bit] [smp:4:4] [async-threads:10] [hipe] [kernel-poll:false]
+
+Eshell V7.2.1  (abort with ^G)
+(T2@Mentem)1> nodes().
+[]
+(T2@Mentem)2> net_kernel:connect('T1@Mentem').
+true
+(T2@Mentem)3> nodes().
+['T1@Mentem']
+(T2@Mentem)4>
+```
+
+`Terminal 1`
+
+```bash
+(T1@Mentem)2> nodes().
+['T2@Mentem']
+(T1@Mentem)3> c('src/cities.erl').
+{ok,cities}
+(T1@Mentem)4> cities:start().
+{ok,<0.51.0>}
+(T1@Mentem)5>
+```
+
+`Terminal 2`
+
+```bash
+(T2@Mentem)4> rpc:call('T1@Mentem', cities, declare, [paris, [london, madrid]]).
+{declare,paris,[london,madrid]}
+```
+
+`Terminal 1`
+
+```bash
+(T1@Mentem)5> cities:linked_to(paris).
+[london,madrid]
+```
+
+What happen if...
+
+`Terminal 2`
+
+```bash
+(T2@Mentem)5> self().
+<0.39.0>
+(T2@Mentem)6> rpc:call('T1@Mentem', cities, declare, [paris, essen]).
+{declare,paris,essen}
+(T2@Mentem)7>
+```
+
+`Terminal 1`
+
+```bash
+(T1@Mentem)6> self().
+<0.39.0>
+(T1@Mentem)7>
+=ERROR REPORT==== 6-Oct-2016::01:22:02 ===
+Error in process <0.51.0> on node 'T1@Mentem' with exit value:
+{function_clause,[{cities,declare,
+                          [[{paris,madrid},{paris,london}],paris,essen],
+                          [{file,"src/cities.erl"},{line,52}]},
+                  {cities,loop,1,[{file,"src/cities.erl"},{line,37}]}]}
+```
+
+`Terminal 2`
+
+```bash
+(T2@Mentem)7> rpc:call('T1@Mentem', cities, declare, [paris, essen]).
+{badrpc,{'EXIT',{badarg,[{cities,declare,2,
+                                 [{file,"src/cities.erl"},{line,25}]},
+                         {rpc,'-handle_call_call/6-fun-0-',5,
+                              [{file,"rpc.erl"},{line,206}]}]}}}
+```
+
+Ooops procee crashed and is not any more available for Terminal 2...
+
+`Terminal 1`
+
+```bash
+(T1@Mentem)7> cities:linked_to(paris).
+** exception error: bad argument
+     in function  cities:linked_to/1 (src/cities.erl, line 28)
+```
