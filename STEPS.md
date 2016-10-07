@@ -822,7 +822,7 @@ Error in process <0.51.0> on node 'T1@Mentem' with exit value:
                               [{file,"rpc.erl"},{line,206}]}]}}}
 ```
 
-Ooops procee crashed and is not any more available for Terminal 2...
+Ooops process crashed and is not any more available for Terminal 2...
 
 `Terminal 1`
 
@@ -863,7 +863,7 @@ init([]) ->
   loop(Pid).
 
 start_cities() ->
-  cities:start().
+  cities:start_link().
 
 loop(CitiesPid) ->
     receive
@@ -872,12 +872,12 @@ loop(CitiesPid) ->
       
       {'EXIT', Pid, Reason} ->
         error_logger:info_msg("Ooops, cities stopped ~p ~n", [Reason]),
-        {ok, Pid} = start_cities(),
-        loop(Pid)
+        {ok, NewPid} = start_cities(),
+        loop(NewPid)
     end.
 ```
 
-`src/cities.erl` : slightly modified to add a log on start.
+`src/cities.erl` : slightly modified to add a log on start and a `start_link`:
 
 
 ```erlang
@@ -886,10 +886,62 @@ start() ->
   register(?MODULE, Pid),
   {ok, Pid}.
 
+start_link() ->
+  Pid = spawn_link(?MODULE, init, [[]]),
+  register(?MODULE, Pid),
+  {ok, Pid}.
+
 init([]) ->
   Cities = cities:new(),
   error_logger:info_msg("Cities started ~n", []),
   loop(Cities).
 
+```
+
+```bash
+→ erl
+Erlang/OTP 18 [erts-7.2.1] [source] [64-bit] [smp:4:4] [async-threads:10] [hipe] [kernel-poll:false]
+
+Eshell V7.2.1  (abort with ^G)
+1> c('src/cities.erl').
+{ok,cities}
+2> c('src/cities_sup.erl').
+src/cities_sup.erl:23: Warning: variable 'CitiesPid' is unused
+src/cities_sup.erl:25: Warning: variable 'Pid' is unused
+src/cities_sup.erl:28: Warning: variable 'Pid' is unused
+{ok,cities_sup}
+3> cities_sup:start().
+<0.45.0>
+4>
+=INFO REPORT==== 7-Oct-2016::19:30:10 ===
+Cities started
+
+4> cities:declare(paris, [madrid]).
+{declare,paris,[madrid]}
+5> cities:linked_to(paris).
+[madrid]
+6> cities:declare(paris, somthing_invalid).
+
+=INFO REPORT==== 7-Oct-2016::19:30:44 ===
+Ooops, cities stopped {function_clause,
+                          [{cities,declare,
+                               [[{paris,madrid}],paris,somthing_invalid],
+                               [{file,"src/cities.erl"},{line,63}]},
+                           {cities,loop,1,
+                               [{file,"src/cities.erl"},{line,48}]}]}
+
+=ERROR REPORT==== 7-Oct-2016::19:30:44 ===
+Error in process <0.46.0> with exit value:
+{function_clause,[{cities,declare,
+                          [[{paris,madrid}],paris,somthing_invalid],
+                          [{file,"src/cities.erl"},{line,63}]},
+                  {cities,loop,1,[{file,"src/cities.erl"},{line,48}]}]}
+{declare,paris,somthing_invalid}
+
+=INFO REPORT==== 7-Oct-2016::19:30:44 ===
+Cities started
+7> cities:linked_to(paris).
+[]
+8>
 ```
 

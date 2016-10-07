@@ -18,7 +18,7 @@ init([]) ->
   loop(Pid).
 
 start_cities() ->
-  cities:start().
+  cities:start_link().
 
 loop(CitiesPid) ->
     receive
@@ -27,6 +27,6 @@ loop(CitiesPid) ->
 
       {'EXIT', Pid, Reason} ->
         error_logger:info_msg("Ooops, cities stopped ~p ~n", [Reason]),
-        {ok, Pid} = start_cities(),
-        loop(Pid)
+        {ok, NewPid} = start_cities(),
+        loop(NewPid)
     end.
